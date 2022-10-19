@@ -108,7 +108,7 @@ function ray_polyhedron()
             else
                 t_out = min(t_out, t);
         }
-        /* vec3 p = r.origin + t_in + r.direct; n += pattern(p); *//* vec3 p = r.origin + t_in + r.direct; n += 1. * noise(10. * p); */
+        vec3 p = r.origin + t_in + r.direct; n += .5 * pattern(p); /* vec3 p = r.origin + t_in + r.direct; n += 1. * noise(10. * p); */
         return vec4(n, t_in < t_out ? t_in : -.1);
     }`;
 }
@@ -138,7 +138,7 @@ function shade_polyhedron()
                 + specular * pow(max(0., dot(reflect, eye)), power));
             }
         }
-        /* if(s.radius >= .1) c += pattern(n); *//* c *= 1. + .5 * noise(3. * n); */
+        c += .1 * pattern(n); /* c *= 1. + .5 * noise(3. * n); */
         return c;
     }`;
 }

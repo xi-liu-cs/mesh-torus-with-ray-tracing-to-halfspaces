@@ -256,7 +256,6 @@ let m0 = new Matrix();
 m0.identity();
 S.draw_mesh(S.square_mesh, m0.get());
 
-// let m = new Matrix();
 for(let i = 0; i < 9; ++i)
 {
    let m = new Matrix();

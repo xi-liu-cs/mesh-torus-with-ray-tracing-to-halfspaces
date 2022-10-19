@@ -388,8 +388,8 @@ for(let i = 0; i < S.n_sphere; ++i)
 {	
 	if(i != S.n_sphere - 1)
 	{
-		S.setUniform('3f', 'u_sphere[' + i + '].center', .9 * Math.sin(time + .1 * i), -.9 * Math.cos(time + .1 * i), .8 * Math.sin(time + i)); /* S.setUniform('3f', 'u_sphere[' + i + '].center', S.s_pos[i][0], S.s_pos[i][1], S.s_pos[i][2]); */
-		S.setUniform('1f', 'u_sphere[' + i + '].radius', radius + .005 * i); 
+		S.setUniform('3f', 'u_sphere[' + i + '].center', .7 * Math.sin(time + .1 * i) + .03 * i, -.8 * Math.cos(time + .1 * i) + .03 * i, .7 * Math.sin(time + i)); /* S.setUniform('3f', 'u_sphere[' + i + '].center', S.s_pos[i][0], S.s_pos[i][1], S.s_pos[i][2]); */
+		S.setUniform('1f', 'u_sphere[' + i + '].radius', radius + .01 * i); 
 	}
 	else
 	{
