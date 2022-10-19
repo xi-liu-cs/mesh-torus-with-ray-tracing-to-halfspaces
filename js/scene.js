@@ -226,7 +226,6 @@ varying vec3 vPos, vNor;
 varying vec4 v_color;
 void main()
 {
-   gl_FragColor = v_color;
    vec3 color = u_back_color;
    ray r = ray(vec3(0., 0., focal_length), normalize(vec3(vPos.xy, -focal_length)));
    float t_min = 10000.;
@@ -400,7 +399,7 @@ for(let i = 0; i < S.n_sphere; ++i)
 }
 S.setUniform('Matrix4fv', 'u_sphere_material', false, S.material.flat());
 S.setUniform('3fv', 'u_back_color', [red.value / 1000, green.value / 1000, blue.value / 1000]);
-/* let cube_matrix4 = new matrix4();
+let cube_matrix4 = new matrix4();
 cube_matrix4.translate(Math.cos(time) / 2, Math.sin(time) / 2, .5);
 cube_matrix4.rotate(10 * time, 1, 0, 0);
 cube_matrix4.rotate(10 * time, 0, 1, 0);
@@ -408,7 +407,7 @@ cube_matrix4.rotate(10 * time, 0, 0, 1);
 cube_matrix4.scale(.3, .3, .1);
 cube_matrix4.invert();
 S.setUniform('Matrix4fv', 'u_cube_inverse_matrix', false, cube_matrix4.a);
-S.setUniform('4fv', 'u_cube', 
+/* S.setUniform('4fv', 'u_cube', 
 [-1,0,0,-1, 1,0,0,-1,
 0,-1,0,-1, 0,1,0,-1,
 0,0,-1,-1, 0,0,1,-1,]);
