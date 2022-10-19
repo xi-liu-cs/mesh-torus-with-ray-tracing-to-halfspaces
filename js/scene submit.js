@@ -9,8 +9,6 @@ description =
    <br><input type = range id = red   value = 5>red
    <br><input type = range id = green value = 10>green
    <br><input type = range id = blue  value = 50>blue
-   <br> <input type=range id=refract value=50> refract
-   <div id = iorInfo>&nbsp;</div>
 </small>`;
 code = {
 'init': `
@@ -38,11 +36,6 @@ for(let i = 0; i < S.n_sphere; ++i)
    S.s_pos.push([Math.random() - .5, Math.random() - .5, Math.random() - .5]);
    S.s_velocity.push([0, 0, 0]);
 }
-
-S.redPlastic    = [.2,.1,.1,0,  .5,.2,.2,0,  2,2,2,20,  0,0,0,0];
-S.greenPlastic  = [.1,.2,.1,0,  .2,.5,.2,0,  2,2,2,20,  0,0,0,0];
-S.bluePlastic   = [.1,.1,.2,0,  .2,.2,.5,0,  2,2,2,20,  0,0,0,0];
-S.whitePlastic  = [.2,.2,.2,0,  .5,.5,.5,0,  2,2,2,20,  0,0,0,0];
 
 S.square_mesh = 
 [-1,1,0, 0,0,1, 0,1,
@@ -199,10 +192,10 @@ function(mesh, matrix)
 }
 `,
 fragment: `S.setFragmentShader(
+define() +
 ray() +
 sphere() + \`
-const int n_q = \` + S.n_q + \`,
-n_sphere = \` + S.n_sphere + \`,
+const int n_sphere = \` + S.n_sphere + \`,
 n_light = \` + S.n_light + \`,
 n_side = \` + S.n_side + \`,
 n_polyhedron = \` + S.n_polyhedron + \`;
@@ -216,10 +209,6 @@ uniform vec4 u_octahedron[8];
 uniform vec4 u_polyhedron[n_polyhedron], u_polyhedron2[n_polyhedron], u_polyhedron3[n_polyhedron], u_polyhedron4[n_polyhedron];
 uniform vec3 u_light_direct[n_light];
 uniform vec3 u_light_color[n_light];
-uniform mat4 u_quadric[n_q];
-uniform mat4 u_phong[n_q];
-uniform int u_shape[n_q];
-uniform float u_index_refract;
 float focal_length = 3.,
 big_radius = .3; \` +
 noise() +
@@ -235,135 +224,11 @@ ray_polyhedron3() +
 ray_polyhedron4() + \`
 varying vec3 vPos, vNor;
 varying vec4 v_color;
-
-vec3 normal_quadric(vec3 p, mat4 q)
-{
-   float fx = 2. * q[0][0] * p.x + (q[0][1] + q[1][0]) * p.y + (q[0][2] + q[2][0]) * p.z + q[0][3] + q[3][0],
-   fy = (q[0][1] + q[1][0]) * p.x + 2. * q[1][1] * p.y + (q[1][2] + q[2][1]) * p.z + q[1][3] + q[3][1],
-   fz = (q[0][2] + q[2][0]) * p.x + (q[1][2] + q[2][1]) * p.y + p.z + 2. * q[2][2] + q[2][3] * q[3][2];
-   return normalize(vec3(fx, fy, fz)); 
-}
-
-vec2 ray_quadric(vec3 v, vec3 w, mat4 q)
-{
-   vec4 v1 = vec4(v, 1.),
-   w0 = vec4(w, 0.);
-   float a = dot(w0, q * w0),
-   b = dot(v1, q * w0) + dot(w0, q * v1),
-   c = dot(v1, q * v1),
-   sqrt_disc = sqrt(b * b - 4. * a * c);
-   return vec2((-b - sqrt_disc) / (2. * a),  (-b + sqrt_disc) / (2. * a));
-}
-
-vec3 quadric1(vec3 T, float n, vec2 t)
-{
-   float t_in = t.x,
-   t_out = t.y;
-   if(t_in > 0. && t_in < t_out && t_in < T.y)
-      T = vec3(n, t_in, t_out);
-   return T;
-}
-
-vec3 quadric2(vec3 T, float n, vec2 t0, vec2 t1)
-{
-   float t_in  = max(t0.x, t1.x),
-   t_out = min(t0.y, t1.y);
-   if(t_in > 0. && t_in < t_out && t_in < T.y)
-   {
-      float i = t0.x == t_in ? 0. : 1.;
-      T = vec3(n + i, t_in, t_out);
-   }
-   return T;
-}
-
-vec3 quadric3(vec3 T, float n, vec2 t0, vec2 t1, vec2 t2)
-{
-   float t_in = max(max(t0.x, t1.x), t2.x),
-   t_out = min(min(t0.y, t1.y), t2.y);
-   if(t_in > 0. && t_in < t_out && t_in < T.y)
-   {
-      float i = t0.x == t_in ? 0. : t1.x == t_in ? 1. : 2.;
-      T = vec3(n + i, t_in, t_out);
-   }
-   return T;
-}
-
-vec3 quadric4(vec3 T, float n, vec2 t0, vec2 t1, vec2 t2, vec2 t3)
-{
-   float t_in = max(max(max(t0.x, t1.x), t2.x), t3.x),
-   t_out = min(min(min(t0.y, t1.y), t2.y), t3.y);
-   if(t_in > 0. && t_in < t_out && t_in < T.y)
-   {
-      float i = t0.x == t_in ? 0. : t1.x == t_in ? 1. : t2.x == t_in ? 2. : 3.;
-      T = vec3(n + i, t_in, t_out);
-   }
-   return T;
-}
-
-vec3 ray_scene(vec3 v, vec3 w)
-{
-   vec3 T = vec3(-1., 1000., 0.);
-   for(int i = 0; i < n_q; ++i)
-   {
-      int shape = u_shape[i];
-      if(shape == 1)
-         T = quadric1(T, float(i), ray_quadric(v, w, u_quadric[i]));
-      else if(shape == 2)
-         T = quadric2(T, float(i), ray_quadric(v, w, u_quadric[i]), ray_quadric(v, w, u_quadric[i + 1]));
-      else if(shape == 3)
-         T = quadric3(T, float(i), ray_quadric(v, w, u_quadric[i]), ray_quadric(v, w, u_quadric[i + 1]), ray_quadric(v, w, u_quadric[i + 2]));
-      else if(shape == 4)
-         T = quadric4(T, float(i), ray_quadric(v, w, u_quadric[i]), ray_quadric(v, w, u_quadric[i + 1]), ray_quadric(v, w, u_quadric[i + 2]), ray_quadric(v, w, u_quadric[i + 3]));
-   }
-   return T;
-}
-
-vec3 shade_surface(vec3 point, vec3 normal, mat4 q, mat4 material)
-{
-   vec3 ambient = material[0].rgb,
-   diffuse = material[1].rgb,
-   specular = material[2].rgb;
-   float power = material[2].a;
-   vec3 c = mix(ambient, u_back_color, .1),
-   eye = vec3(0., 0., 1.);
-   for(int i = 0; i < n_light; ++i)
-   {
-      float t = -1.;
-      for(int j = 0; j < n_q; ++j)
-          t = max(t, ray_quadric(point, u_light_direct[i], q).x);
-      if(t < 0.)
-      {
-         vec3 reflect = 2. * dot(normal, u_light_direct[i]) * normal - u_light_direct[i];
-         c += u_light_color[i] * (diffuse * max(0., dot(normal, u_light_direct[i]))
-         + specular * pow(max(0., dot(reflect, eye)), power));
-      }
-   }
-   /* c += pattern(n); *//* c *= 1. + .5 * noise(3. * n); */
-   return c;
-}
-
 void main()
 {
    vec3 color = u_back_color;
    ray r = ray(vec3(0., 0., focal_length), normalize(vec3(vPos.xy, -focal_length)));
    float t_min = 10000.;
-   vec3 v = vec3(0., 0., focal_length * 1.),
-   w = normalize(vec3(vPos.xy, -focal_length * 1.));
-   vec3 T = ray_scene(v, w);
-   mat4 q, phong;
-   for(int i = 0; i < n_q; ++i)
-   {
-      if(i == int(T.x))
-      {
-         q = u_quadric[i];
-         vec3 p = v + T.y * w,
-         n = normal_quadric(p, q);
-         if(i - 2 * (i / 2) != 0)
-            color += .05 * shade_surface(p, n, q, u_phong[i]);
-         else
-            color += shade_surface(p, n, q, u_phong[i]);
-      }
-   }
    for(int i = 0; i < n_sphere; ++i)
    {
       float t = ray_sphere(r, u_sphere[i]);
@@ -436,116 +301,6 @@ void main()
 }
 \`);`,
 render: `
-
-let ldData = [normalize([1,1,1]),
-normalize([-1,-1,-1]) ];
-S.setUniform('3fv', 'u_light_direct', ldData.flat());
-S.setUniform('3fv', 'u_light_color', [1,1,1, .5,.3,.1]);
-S.n_light = ldData.length;
-let ior = refract.value / 100 + 1;
-S.setUniform('1f', 'u_index_refract', ior);
-
-/* xx yy zz c */
-let qSlabX  = [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,-1]; /* x*x - 1 <= 0 */
-let qSlabY  = [0,0,0,0, 0,1,0,0, 0,0,0,0, 0,0,0,-1]; /* y*y - 1 <= 0 */
-let qSlabZ  = [0,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,-1]; /* z*z - 1 <= 0 */
-let qSphere = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,-1]; /* x*x + y*y + z*z - 1 <= 0 */
-let qTubeX  = [0,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,-1]; /* y*y + z*z - 1 <= 0 */
-let qTubeY  = [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,-1]; /* x*x + z*z - 1 <= 0 */
-let qTubeZ  = [1,0,0,0, 0,1,0,0, 0,0,0,0, 0,0,0,-1]; /* x*x + y*y - 1 <= 0 */
-
-let shape = [], coefs = [], xform = [], phong = [], M;
-
-let sphere = (m, M) =>
-{
-   shape.push(1);
-   phong.push(m);
-   xform.push(M);
-   coefs.push(qSphere);
-}
-
-let tubeX = (m, M) => 
-{
-   shape.push(2, 0);
-   phong.push(m, m);
-   xform.push(M, M);
-   coefs.push(qTubeX, qSlabX);
-}
-
-let tubeY = (m, M) => 
-{
-   shape.push(2, 0);
-   phong.push(m, m);
-   xform.push(M, M);
-   coefs.push(qTubeY, qSlabY);
-}
-
-let tubeZ = (m, M) => 
-{
-   shape.push(2, 0);
-   phong.push(m, m);
-   xform.push(M, M);
-   coefs.push(qTubeZ, qSlabZ);
-}
-
-let cube = (m, M) => 
-{
-   shape.push(3, 0, 0);
-   phong.push(m, m, m);
-   xform.push(M, M, M);
-   coefs.push(qSlabX, qSlabY, qSlabZ);
-}
-
-let octahedron = (m, M) =>
-{
-   shape.push(4, 0, 0, 0);
-   phong.push(m, m, m, m);
-   xform.push(M, M, M, M);
-   coefs.push([1, 2, 2, 0,  0, 1, 2, 0,  0,0,1,0,  0,0,0,-1]);
-   coefs.push([1,-2,-2, 0,  0, 1, 2, 0,  0,0,1,0,  0,0,0,-1]);
-   coefs.push([1,-2, 2, 0,  0, 1,-2, 0,  0,0,1,0,  0,0,0,-1]);
-   coefs.push([1, 2,-2, 0,  0, 1,-2, 0,  0,0,1,0,  0,0,0,-1]);
-}
-
-tubeY(S.redPlastic,
-mScale(.2,.03,.2,
-mRoty(time * 1.1,
-mRotz(time * 1.2,
-mRotx(time * 1.3,
-matrixTranslate(-Math.sin(time)*.5,0,Math.cos(time)*.5+.5))))));
-
-/* octahedron(S.greenPlastic,
-mScale(.18,.18,.18,
-mRoty(time * 1.2,
-mRotz(time * 1.3,
-mRotx(time * 1.1,
-matrixTranslate(0,-Math.cos(time)*.4,Math.sin(time)*.4+.5)))))); */
-
-cube(S.whitePlastic,
-mScale(.18,.03,.12,
-mRoty(time * 1.2,
-mRotz(time * 1.1,
-mRotx(time * 1.3,
-matrixTranslate(0,Math.cos(time)*.2,.5))))));
-
-/* sphere(S.bluePlastic,
-mScale(.2,.15,.18,
-mRoty(time * 1.3,
-mRotz(time * 1.1,
-mRotx(time * 1.2,
-matrixTranslate(Math.sin(time)*.5,0,-Math.cos(time)*.5+.5)))))); */
-
-for(let n = 0 ; n < coefs.length ; n++)
-{
-   let IM = matrixInverse(xform[n]);
-   coefs[n] = matrixMultiply(matrixTranspose(IM), matrixMultiply(coefs[n], IM));
-}
-S.setUniform('1iv', 'u_shape', shape);
-S.setUniform('Matrix4fv', 'u_quadric', false, coefs.flat());
-S.setUniform('Matrix4fv', 'u_phong', false, phong.flat());
-S.n_q = coefs.length;
-iorInfo.innerHTML = 'index of refraction = ' + (ior * 100 >> 0) / 100;
-
 S.setUniform('Matrix4fv', 'uProject', false,
 [1,0,0,0, 0,1,0,0, 0,0,1,-1, 0,0,0,1]);
 let m0 = new Matrix();

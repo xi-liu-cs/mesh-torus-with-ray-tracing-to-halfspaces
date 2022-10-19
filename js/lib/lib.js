@@ -46,10 +46,3 @@ function shader_file(gl, file, type, start)
     request.open('get', file, true);
     request.send();
 }
-
-function define()
-{
-    return `
-    #define max_loop 10000
-    `;
-}

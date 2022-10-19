@@ -20,7 +20,7 @@ function noise()
     }
     vec3 object(float y)
     {
-        vec3 back = .5 * vec3(0., 0., 0.);
+        vec3 back = vec3(0., 0., 0.);
         float s = mix(.5, 1., clamp(3.* y - 2., 0., 1.));
         return mix(back, vec3(s), clamp(.5 * y, 0., 1.));
     }
