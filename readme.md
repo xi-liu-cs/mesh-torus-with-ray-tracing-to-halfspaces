@@ -2,8 +2,7 @@
 Xi Liu</br>
 2022</br>
 meshes are represented by triangle strips</br>
-mesh editing algorithms such as glue_mesh(float * a, float * b) that concatenates the last vertex of a with first vertex of b, uv_mesh(float * (*f)(float, float), float nu, float nv) </br>
-each vertex contains position, surface normal, and uv coordinates</br>
+mesh editing algorithms such as glue_mesh that concatenates the last vertex of array a with first vertex of array b, uv_mesh that iteratively calls the shape_mesh_function that generates the vertex data (position, surface normal, and uv coordinates) for each u and v </br>
 ray trace to second order surfaces such as cylinder, hyperboloid, sphere</br>
 ray trace to halfspace surfaces, using different random number generators to generate polygon arrays that contain homogeneous form of halfspace descriptions of polygons 
 ![8](img/8.png)
