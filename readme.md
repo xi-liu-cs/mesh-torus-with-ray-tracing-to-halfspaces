@@ -2,7 +2,7 @@
 Xi Liu</br>
 2022</br>
 meshes are represented by triangle strips</br>
-glue_mesh(float * a, float * b) concatenates the last vertex of a with first vertex of b, uv_mesh(function, nu, nv) 
+glue_mesh(float * a, float * b) concatenates the last vertex of a with first vertex of b, uv_mesh(float * (*f)(float, float), float nu, float nv) 
 each vertex contains position, surface normal, and uv coordinates
 ray trace to second order surfaces such as cylinder, hyperboloid
 ![8](img/8.png)
