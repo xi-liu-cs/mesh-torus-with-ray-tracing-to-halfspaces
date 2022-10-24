@@ -1,4 +1,4 @@
-# mesh torus and ray trace to halfspaces and second order surfaces
+# mesh torus ray trace to halfspaces second order surfaces
 Xi Liu</br>
 2022</br>
 meshes are represented by triangle strips, mesh editing algorithms such as glue_mesh that concatenates the last vertex of array a with first vertex of array b, uv_mesh that iteratively calls the shape_mesh_function that generates the vertex data (position, surface normal, and uv coordinates) for each u and v</br>
